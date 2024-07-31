@@ -39,18 +39,14 @@ Buffer *copy_buffer(Buffer *buffer) {
 	// Check these using man pages. e.g. 'man malloc'
 	//
 
-	Buffer* new_buffer = malloc(sizeof(Buffer));
-	memset(new_buffer, 0, n);
+	Buffer* new_buffer = (Buffer*)malloc(sizeof(Buffer));
 
-	
+	new_buffer->data = (char*)malloc(buffer->size);
 
-	for (size_t i = 0; i < n; i++)
-	{
-		new_buffer[i] = buffer[i];
-	}
+	memcpy(new_buffer->data, buffer->data, buffer->size);
+	new_buffer->size = buffer->size;
 
 	return new_buffer;
-	
 }
 
 // Example buffer with normal strings
