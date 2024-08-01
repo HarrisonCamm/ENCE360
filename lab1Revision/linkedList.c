@@ -117,9 +117,15 @@ Link *fibonacci(int32_t n) {
 // There's a question on the Quiz about this - so do this first!
 //
 
-// Link *list_map(...) {
-// TODO: Implement me!
-// }
+Link *list_map(Link *list, int32_t (*func)(int32_t)) {
+	Link *new_list = NULL;
+	Link *l = list;
+	while (l != NULL) {
+		new_list = list_append(func(l->value), new_list);
+		l = l->next;
+	}
+	return list_reverse(new_list);
+}
 
 
 
@@ -128,7 +134,12 @@ Link *fibonacci(int32_t n) {
  * traverse the list.
  */
 void list_free(Link *list) {
-	// TODO: Implement me
+	Link *l = list;
+	while (l != NULL) {
+		Link *next = l->next;
+		free(l);
+		l = next;
+	}
 }
 
 
@@ -142,14 +153,14 @@ int32_t square(int32_t x) {
 
 int main(void) {
 	Link *fib = fibonacci(10);
-	// Link *fib_sq = list_map(fib, square);  
+	Link *fib_sq = list_map(fib, square);  
 
 	// print out our list of fibonacci^2 (in reverse)
 	// 1, 1, 4, 9, 25, 64, 169, 441, 1156, 3025
-	// list_print(fib_sq);
+	list_print(fib_sq);
 	list_print(fib);
 
-	// list_free(fib_sq);
+	list_free(fib_sq);
 	list_free(fib);
 
 	return 0;
