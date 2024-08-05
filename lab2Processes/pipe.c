@@ -13,6 +13,7 @@ int child_status, size;
 #define INP 1
 #define OUTP 0
 
+
 int main(int argc, char *argv[]) {
 
     if (argc != 2) {

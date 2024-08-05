@@ -8,6 +8,7 @@
 int main(void) {
 
     int fd;
+    
 
     /* Open my.file */
     if ((fd = open("my.file", O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR)) == -1) {
