@@ -12,6 +12,7 @@ int main(void) {
 
     pipe(fd);
     if ((childpid = fork()) == 0) { /* Child code: Runs ls */
+        // Output of what is executed will come fro 
         dup2(fd[INP], STDOUT_FILENO);
         close(fd[OUTP]);
         close(fd[INP]);
@@ -20,6 +21,7 @@ int main(void) {
     }
 
     else { /* Parent code: Runs sort */
+        // Input for what is executed will come from the output of the pipe
         dup2(fd[OUTP], STDIN_FILENO);
         close(fd[OUTP]);
         close(fd[INP]);
