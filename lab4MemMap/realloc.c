@@ -96,3 +96,18 @@ int main(int argc, char *argv[])
 	
 	exit(EXIT_SUCCESS);
 }
+
+
+	char *readFrom = mmap(NULL, size, PROT_READ, MAP_PRIVATE, src, 0);
+		char *writeTo = mmap(NULL, size, PROT_WRITE, MAP_SHARED, dst, 0);
+		memcpy(writeTo, readFrom, size);
+		if(munmap(readFrom, size) == -1) {
+			perror("munmap");
+        	close(readFrom);
+        	exit(EXIT_FAILURE);
+		}
+		if(munmap(writeTo, size) == -1) {
+			perror("munmap");
+        	close(writeTo);
+        	exit(EXIT_FAILURE);
+		}

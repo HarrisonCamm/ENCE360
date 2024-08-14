@@ -61,8 +61,30 @@ int main(int argc, char *argv[])
 		 * We need MAP_SHARED on the destination so that our writes are written back to the file
 		 * 
 		 */
+
+
+		void *src_map = mmap(NULL, size, PROT_READ, MAP_PRIVATE, src, 0);
+
+		if (src_map == MAP_FAILED) {
+			HANDLE_ERROR("mmap source file");
+		}
 		
-		
+		void *dst_map = mmap(NULL, size, PROT_WRITE, MAP_SHARED, dst, 0);
+
+		if (dst_map == MAP_FAILED) {
+			HANDLE_ERROR("mmap destination file");
+		}
+
+
+		memcpy(dst_map, src_map, size);
+
+		if(munmap(src_map, size) == -1) {
+			HANDLE_ERROR("munmap source file");
+		}
+		if(munmap(dst_map, size) == -1) {
+			HANDLE_ERROR("munmap destination file");
+		}
+
 
 		close(src);
 		close(dst);
