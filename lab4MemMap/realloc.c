@@ -24,8 +24,23 @@ typedef struct {
  */
 Buffer *newBuffer(size_t reserved) {
 	/* TODO */
-	
-	assert(0 && "not implemented");
+	Buffer *bufferNew = malloc(sizeof(Buffer));
+	if (bufferNew == NULL) {
+        perror("Failed to allocate memory for buffer");
+        exit(EXIT_FAILURE);
+    }
+
+	bufferNew->length = 0;
+	bufferNew->reserved = reserved;
+	bufferNew->data = malloc(reserved);
+
+	if (bufferNew->data == NULL) {
+        perror("Failed to allocate memory for buffer data");
+        free(bufferNew);
+        exit(EXIT_FAILURE);
+    }
+
+	return bufferNew;
 }
 
 
@@ -44,9 +59,19 @@ void freeBuffer(Buffer *buffer) {
  * Finally, append the data to the end of the buffer and increase it's length.
  */
 void appendBuffer(Buffer *buffer, char *data, size_t length) {
-	/* TODO */
-	
-	assert(0 && "not implemented");
+	while (buffer->length + length > buffer->reserved)
+	{
+		buffer->reserved *= 2;
+		buffer->data = realloc(buffer->data, buffer->reserved);
+		if (buffer->data == NULL) {
+            perror("Failed to reallocate memory for buffer data");
+            exit(EXIT_FAILURE);
+        }
+	}
+
+	// Copy the new data into the buffer
+    memcpy(buffer->data + buffer->length, data, length);
+    buffer->length += length;
 }
 
 
@@ -96,18 +121,3 @@ int main(int argc, char *argv[])
 	
 	exit(EXIT_SUCCESS);
 }
-
-
-	char *readFrom = mmap(NULL, size, PROT_READ, MAP_PRIVATE, src, 0);
-		char *writeTo = mmap(NULL, size, PROT_WRITE, MAP_SHARED, dst, 0);
-		memcpy(writeTo, readFrom, size);
-		if(munmap(readFrom, size) == -1) {
-			perror("munmap");
-        	close(readFrom);
-        	exit(EXIT_FAILURE);
-		}
-		if(munmap(writeTo, size) == -1) {
-			perror("munmap");
-        	close(writeTo);
-        	exit(EXIT_FAILURE);
-		}
