@@ -41,14 +41,16 @@ void matrix_mul_basic(double *res, double *a, double *b, size_t n) {
 // What impact does the transposition have on performance? Why?
 // 
 
-void matrix_mul_transposed(double *res, double *a, double *b, size_t n) {
-	double *bt = alloc_matrix(n);
-	matrix_transpose(bt, b, n);
-	
-	// TODO: implement matrix multiplication between a and transposed matrix bt
-
-	free(bt);
-	
+void matrix_mul_transposed(double *res, double *a, double *bt, size_t n) {
+    for (size_t i = 0; i < n; ++i) {
+        for (size_t j = 0; j < n; ++j) {
+            double r = 0.0;
+            for (size_t k = 0; k < n; ++k) {
+                r += a[i * n + k] * bt[j * n + k];
+            }
+            res[i * n + j] = r;
+        }
+    }
 }
 
 size_t min(size_t a, size_t b) {
@@ -69,26 +71,28 @@ size_t min(size_t a, size_t b) {
 //
 
 void matrix_mul_blocked(double *res, double *a, double *b, size_t n, size_t block) {
-	
-	zero_matrix(res, n);
-	
-	// loop over outer blocks 
-	for (size_t i = 0; i < n; i += block) {
-		for (size_t j = 0; j < n; j += block) { 
-			for (size_t k = 0; k < n; k += block) {
-				
-				int i_end = min(i + block, n);
-				int j_end = min(j + block, n);
-				int k_end = min(k + block, n);
-				
-				// loop over inner block (indices ii, jj, kk)
-				
-				//TODO: finish blocked matrix implementation
-			}
-		}
-	}
-	
-	
+    zero_matrix(res, n);
+
+    for (size_t i = 0; i < n; i += block) {
+        for (size_t j = 0; j < n; j += block) {
+            for (size_t k = 0; k < n; k += block) {
+
+                size_t i_end = min(i + block, n);
+                size_t j_end = min(j + block, n);
+                size_t k_end = min(k + block, n);
+
+                for (size_t ii = i; ii < i_end; ++ii) {
+                    for (size_t jj = j; jj < j_end; ++jj) {
+                        double r = 0.0;
+                        for (size_t kk = k; kk < k_end; ++kk) {
+                            r += a[ii * n + kk] * b[kk * n + jj];
+                        }
+                        res[ii * n + jj] += r;
+                    }
+                }
+            }
+        }
+    }
 }
 
 

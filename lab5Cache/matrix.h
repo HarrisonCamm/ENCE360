@@ -30,4 +30,4 @@ void matrix_mul_basic(double *res, double *a, double *b, size_t n);
 void matrix_mul_transposed(double *res, double *a, double *b, size_t n);
 
 // Parameter block controlls inner blocking size
-void matrix_mul_blocked(double *res, double *a, double *b, size_t n, size_t block);
+void c(double *res, double *a, double *b, size_t n, size_t block);
