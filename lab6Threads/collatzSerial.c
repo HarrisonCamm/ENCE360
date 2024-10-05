@@ -37,7 +37,8 @@ void collatzSweep(uint32_t maxStart) {
 int main(void) {
 	uint32_t testValues[NUM_TESTS] = {8400511, 1234567, 9876543, 5102234, 8246889, 3453451, 6666666, 6372812};
 	
-	// pthread_t threads[NUM_TESTS]; // Uncomment me when you start to parallelise. 
+	// pthread_t threads[NUM_TESTS]; // Uncomment me when you start to parallelise.
+	
 
 	for (size_t i = 0; i < NUM_TESTS; i++) {
 		collatzSweep(testValues[i]);
