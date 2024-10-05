@@ -5,6 +5,15 @@
 
 #define NUM_TESTS 8
 
+
+// typedef struct {
+// 	uint32_t maxStart;
+// 	uint64_t totalSteps;
+// } thread_result_t;
+
+
+
+
 // This is a helper function for collatzSweep(). 
 uint64_t collatzWalk(uint32_t initNum) {
 	uint64_t numSteps = 0;
@@ -23,6 +32,7 @@ uint64_t collatzWalk(uint32_t initNum) {
 
 
 // Ignore me for later. 
+// Ignore me for later. 
 void *collatzSweep(void* maxStart) {
     
 	uint64_t totalSteps = 0;
@@ -30,9 +40,15 @@ void *collatzSweep(void* maxStart) {
 	for (uint32_t i = 1; i <= *(uint32_t*)maxStart; i++) {
 		totalSteps += collatzWalk(i);
 	}
+	
+	char* result;
+	sprintf(result,"Sweep to %u: %lu total steps\n", *(uint32_t*)maxStart, totalSteps);
 
-	printf("Sweep to %u: %lu total steps\n", *(uint32_t*)maxStart, totalSteps);
+	pthread_exit(result);
 }
+
+
+
 
 
 int main(void) {
@@ -40,13 +56,16 @@ int main(void) {
 	
 	pthread_t threads[NUM_TESTS]; // Uncomment me when you start to parallelise. 
 
+	char** output;
+
 	for (size_t i = 0; i < NUM_TESTS; i++) {
         pthread_create(&threads[i], NULL, &collatzSweep, &testValues[i]);
 	}
 
 	for (size_t i = 0; i < NUM_TESTS; i++)
 	{
-		pthread_join(threads[i],NULL);
+		pthread_join(threads[i], (void**) output);
+		printf(*output);
 	}
 	
 	return 0;
