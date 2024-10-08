@@ -88,13 +88,7 @@ int main(void)
 	printf("Query format: [func] [start] [end] [numSteps]\n");
 
 	while (getValidInput(&func, funcName, &rangeStart, &rangeEnd, &numSteps)) {
-		childPid = fork();
-		if(childPid < 0) { /* Error Handling */
-			perror("fork");
-        	exit(1);
-		} else if (childPid == 0) {
-			
-		}
+		
 		double area = integrateTrap(func, rangeStart, rangeEnd, numSteps);
 
 		printf("The integral of function \"%s\" in range %g to %g is %.10g\n", funcName, rangeStart, rangeEnd, area);

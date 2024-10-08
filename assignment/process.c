@@ -91,15 +91,22 @@ int main(void)
 	double rangeEnd;
 	size_t numSteps;
 	MathFunc_t* func;
-    pid_t
+    pid_t childPid;
 	char funcName[10] = {'\0'};
 
 	printf("Query format: [func] [start] [end] [numSteps]\n");
 
 	while (getValidInput(&func, funcName, &rangeStart, &rangeEnd, &numSteps)) {
 
-		double area = integrateTrap(func, rangeStart, rangeEnd, numSteps);
-		printf("The integral of function \"%s\" in range %g to %g is %.10g\n", funcName, rangeStart, rangeEnd, area);
+		childPid = fork();
+		if(childPid < 0) { /* Error Handling */
+			perror("fork");
+        	exit(1);
+		} else if (childPid == 0) {
+			sem_wait(&numFreeChildren);
+			double area = integrateTrap(func, rangeStart, rangeEnd, numSteps);
+			printf("The integral of function \"%s\" in range %g to %g is %.10g\n", funcName, rangeStart, rangeEnd, area);
+		}
 	}
 
 	_exit(0); // Forces more immediate exit than normal - **Use this to exit processes throughout the assignment!**
@@ -107,5 +114,5 @@ int main(void)
 
 
 void waitChild(int sigNum) {
-    
+    sem_post(&numFreeChildren);
 }
