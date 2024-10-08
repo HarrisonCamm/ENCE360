@@ -34,6 +34,7 @@ void channel_write(Channel *channel, void *message) {
 	// You will need sem_post, sem_wait
 	//
 	// TODO: wait for our chance to access the variable
+	sem_wait(&(channel->write));
 
   //   assert(channel->message == NULL && "channel should be empty!");
 
@@ -41,7 +42,7 @@ void channel_write(Channel *channel, void *message) {
 	channel->message = message;
 
 	// TODO: signal to any readers that there's an update
-
+	sem_post(&(channel->read));
 
 	// Channel is now occupied
 }
@@ -57,12 +58,14 @@ void *channel_read(Channel *channel) {
 	//
 	void *message = NULL;
 	// wait for an update from one of the threads
+	sem_wait(&(channel->read));
 
 	// read the variable
 	message = channel->message;
 	channel->message = NULL;
 
 	// signal to any threads waiting that they can send another update
+	sem_post(&(channel->write));
 
 	return message;
 
@@ -77,10 +80,11 @@ void channel_init(Channel *channel) {
 	// You will need: sem_init
 	//
 
-
 	// TODO: Initialise count of the read semaphore to 0 (there's nothing to read yet)
+	sem_init(&channel->read,0,0);
 
 	// TODO: Initialise the write semaphore is initialised to 1 (channel is empty, free for writing)
+	sem_init(&channel->write, 0,1);
 
 	channel->message = NULL;
 

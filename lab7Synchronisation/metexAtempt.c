@@ -23,9 +23,8 @@ void *runSummation(void *ptr)
 
 	for (size_t i = 0; i < worker->n; i++) {
 		//TODO: make this thread safe!!
-		pthread_mutex_lock(worker->lock);
+
 		(*worker->total)++;
-		pthread_mutex_unlock(worker->lock);
 	}
 
 	return NULL;
