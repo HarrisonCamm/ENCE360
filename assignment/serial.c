@@ -5,11 +5,10 @@
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
-#include <semaphore.h>
+
 
 
 typedef double MathFunc_t(double);
-static sem_t numFreeChildren;
 
 
 double gaussian(double x)
@@ -82,13 +81,11 @@ int main(void)
 	double rangeEnd;
 	size_t numSteps;
 	MathFunc_t* func;
-	pid_t childPid;
 	char funcName[10] = {'\0'};
 
 	printf("Query format: [func] [start] [end] [numSteps]\n");
 
 	while (getValidInput(&func, funcName, &rangeStart, &rangeEnd, &numSteps)) {
-		
 		double area = integrateTrap(func, rangeStart, rangeEnd, numSteps);
 
 		printf("The integral of function \"%s\" in range %g to %g is %.10g\n", funcName, rangeStart, rangeEnd, area);

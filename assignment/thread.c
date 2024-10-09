@@ -87,7 +87,8 @@ int main(void) {
     pthread_t threads[NUM_THREADS]; // Array of threads
     struct ThreadArgs threadArgs[NUM_THREADS]; // Array of arguments for threads
 
-    double rangeStart, rangeEnd;
+    double rangeStart;
+    double rangeEnd;
     size_t numSteps;
     MathFunc_t* func;
     char funcName[10] = {'\0'};

@@ -7,13 +7,23 @@
 #include <math.h>
 #include <semaphore.h>
 #include <signal.h>
+#include <pthread.h>
 
-# define MAX_CHILDREN 4
-
+#define MAX_CHILDREN 4 //Define maximum number of children allowed
+#define NUM_THREADS 4 // Define number of threads
 
 typedef double MathFunc_t(double);
 static sem_t numFreeChildren;
 
+double globalResult = 0; // Shared result variable
+pthread_mutex_t resultMutex; // Mutex for controlling access to the global result
+
+struct ThreadArgs {
+    MathFunc_t *func;
+    double rangeStart;
+    double rangeEnd;
+    size_t numSteps;
+};
 
  /* Function prototypes */
 void sigquit(int sigNum);
@@ -90,6 +100,9 @@ void waitChild(int sigNum) {
 
 int main(void)
 {
+    pthread_t threads[NUM_THREADS]; // Array of threads
+    struct ThreadArgs threadArgs[NUM_THREADS]; // Array of arguments for threads
+
 	double rangeStart;
 	double rangeEnd;
 	size_t numSteps;
@@ -103,6 +116,13 @@ int main(void)
 	printf("Query format: [func] [start] [end] [numSteps]\n");
 
 	while (true) {
+
+        globalResult = 0; // Reset global result
+        double stepSize = (rangeEnd - rangeStart) / NUM_THREADS;
+        size_t stepsPerThread = numSteps / NUM_THREADS;
+
+        pthread_mutex_init(&resultMutex, NULL); // Initialize the mutex
+
 		sem_wait(&numFreeChildren); // Wait until there's a free child process slot
 
 		if(getValidInput(&func, funcName, &rangeStart, &rangeEnd, &numSteps)) {
