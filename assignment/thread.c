@@ -37,7 +37,7 @@ double chargeDecay(double x) {
     }
 }
 
-// Trapezoid integration method for a range
+// Integrate using the trapezoid method.
 void* integrateTrap(void *args) {
     struct ThreadArgs *threadArgs = (struct ThreadArgs *)args;
     MathFunc_t* func = threadArgs->func;

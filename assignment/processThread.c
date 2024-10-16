@@ -8,14 +8,16 @@
 #include <semaphore.h>
 #include <signal.h>
 #include <pthread.h>
+#include <time.h>
+#include <sys/wait.h>
 
-#define MAX_CHILDREN 4 //Define maximum number of children allowed
+#define MAX_CHILDREN 8 //Define maximum number of children allowed
 #define NUM_THREADS 4 // Define number of threads
 
 typedef double MathFunc_t(double);
 static sem_t numFreeChildren;
 
-double globalResult = 0; // Shared result variable
+double globalArea = 0; // Shared result variable
 pthread_mutex_t resultMutex; // Mutex for controlling access to the global result
 
 struct ThreadArgs {
@@ -51,21 +53,31 @@ double chargeDecay(double x)
 
 
 
-// Integrate using the trapezoid method. 
-double integrateTrap(MathFunc_t* func, double rangeStart, double rangeEnd, size_t numSteps)
-{
-	double rangeSize = rangeEnd - rangeStart;
-	double dx = rangeSize / numSteps;
+// Integrate using the trapezoid method.
+void* integrateTrap(void *args) {
+    struct ThreadArgs *threadArgs = (struct ThreadArgs *)args;
+    MathFunc_t* func = threadArgs->func;
+    double rangeStart = threadArgs->rangeStart;
+    double rangeEnd = threadArgs->rangeEnd;
+    size_t numSteps = threadArgs->numSteps;
 
-	double area = 0;
-	for (size_t i = 0; i < numSteps; i++) {
-		double smallx = rangeStart + i*dx;
-		double bigx = rangeStart + (i+1)*dx;
+    double rangeSize = rangeEnd - rangeStart;
+    double dx = rangeSize / numSteps;
+    double localArea = 0;
 
-		area += dx * ( func(smallx) + func(bigx) ) / 2; // Would be more efficient to multiply area by dx once at the end. 
-	}
+    for (size_t i = 0; i < numSteps; i++) {
+        double smallx = rangeStart + i * dx;
+        double bigx = rangeStart + (i + 1) * dx;
+        localArea += dx * (func(smallx) + func(bigx)) / 2;
+    }
 
-	return area;
+
+    // Lock the mutex before updating the global result
+    pthread_mutex_lock(&resultMutex);
+    globalArea += localArea;
+    pthread_mutex_unlock(&resultMutex);
+
+    return NULL;
 }
 
 
@@ -98,49 +110,92 @@ void waitChild(int sigNum) {
 }
 
 
+
 int main(void)
 {
-    pthread_t threads[NUM_THREADS]; // Array of threads
-    struct ThreadArgs threadArgs[NUM_THREADS]; // Array of arguments for threads
+    struct timespec start, end;
+    sem_init(&numFreeChildren, 0, MAX_CHILDREN);
+    signal(SIGCHLD, waitChild); // Signal handler for completed child processes
 
-	double rangeStart;
-	double rangeEnd;
-	size_t numSteps;
-	MathFunc_t* func;
+    double rangeStart;
+    double rangeEnd;
+    size_t numSteps;
+    MathFunc_t* func;
     pid_t childPid;
-	char funcName[10] = {'\0'};
-	
-	sem_init(&numFreeChildren, 0, MAX_CHILDREN);
-	signal(SIGCHLD, waitChild); // The child will never receive a SIGCHLD, so this is safe. 
+    char funcName[10] = {'\0'};
 
-	printf("Query format: [func] [start] [end] [numSteps]\n");
+    printf("Query format: [func] [start] [end] [numSteps]\n");
 
-	while (true) {
+    // Start timing (parent process)
+    clock_gettime(CLOCK_MONOTONIC, &start);
 
-        globalResult = 0; // Reset global result
-        double stepSize = (rangeEnd - rangeStart) / NUM_THREADS;
-        size_t stepsPerThread = numSteps / NUM_THREADS;
+    while (true) {
 
-        pthread_mutex_init(&resultMutex, NULL); // Initialize the mutex
+        sem_wait(&numFreeChildren); // Wait until there's a free child process slot
 
-		sem_wait(&numFreeChildren); // Wait until there's a free child process slot
+        if (getValidInput(&func, funcName, &rangeStart, &rangeEnd, &numSteps)) {
+            childPid = fork();
+            if (childPid < 0) { // Error Handling
+                perror("Failed to fork");
+                sem_post(&numFreeChildren);
+            } else if (childPid == 0) {
+                // Child process starts here
+                globalArea = 0; // Reset global area
+                pthread_t threads[NUM_THREADS]; // Array of threads
+                struct ThreadArgs threadArgs[NUM_THREADS]; // Array of arguments for threads
 
-		if(getValidInput(&func, funcName, &rangeStart, &rangeEnd, &numSteps)) {
-			childPid = fork();
-			if(childPid < 0) { /* Error Handling */
-				perror("Failed to fork");
-				sem_post(&numFreeChildren);
-			} else if (childPid == 0) { //child process
-				double area = integrateTrap(func, rangeStart, rangeEnd, numSteps);
-				printf("The integral of function \"%s\" in range %g to %g is %.10g\n", funcName, rangeStart, rangeEnd, area);
-				_exit(0); // Force immediate exit in the child process
-			}
-		} else {
-			printf("Invalid input, exiting.\n");
+                double stepSize = (rangeEnd - rangeStart) / NUM_THREADS;
+                size_t stepsPerThread = numSteps / NUM_THREADS;
+
+                // Start timing for child process
+                clock_gettime(CLOCK_MONOTONIC, &start);
+
+                pthread_mutex_init(&resultMutex, NULL); // Initialize the mutex
+
+                // Create threads to process the integration in parallel
+                for (int i = 0; i < NUM_THREADS; i++) {
+                    threadArgs[i].func = func;
+                    threadArgs[i].rangeStart = rangeStart + i * stepSize;
+                    threadArgs[i].rangeEnd = rangeStart + (i + 1) * stepSize;
+                    threadArgs[i].numSteps = stepsPerThread;
+
+                    pthread_create(&threads[i], NULL, integrateTrap, (void *)&threadArgs[i]);
+                }
+
+                // Wait for all threads to finish
+                for (int i = 0; i < NUM_THREADS; i++) {
+                    pthread_join(threads[i], NULL);
+                }
+
+                pthread_mutex_destroy(&resultMutex); // Destroy the mutex
+
+                // End timing for child process
+                clock_gettime(CLOCK_MONOTONIC, &end);
+
+                // Calculate the time difference in seconds for the child process
+                double timeTaken = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+
+                printf("The integral of function \"%s\" in range %g to %g is %.10g\n", funcName, rangeStart, rangeEnd, globalArea);
+                printf("Time taken: %.6f seconds\n", timeTaken);
+                
+                _exit(0); // Terminate child process
+            }
+        } else {
+            printf("Invalid input, exiting.\n");
             break;
-		}
-	}
-	
-	sem_destroy(&numFreeChildren);
-	_exit(0); // Forces more immediate exit than normal - **Use this to exit processes throughout the assignment!**
+        }
+    }
+
+    // Wait for all child processes to complete before stopping the timer
+    while (waitpid(-1, NULL, 0) > 0); // Wait for all children to terminate
+
+    // End timing for the entire program (parent process)
+    clock_gettime(CLOCK_MONOTONIC, &end);
+
+    // Calculate the total time difference for the entire program
+    double totalTimeTaken = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+    printf("Total time taken by parent and all children: %.6f seconds\n", totalTimeTaken);
+
+    sem_destroy(&numFreeChildren); // Cleanup
+    _exit(0); // Terminate parent process
 }

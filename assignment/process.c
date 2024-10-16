@@ -8,6 +8,7 @@
 #include <semaphore.h>
 #include <signal.h>
 
+
 # define MAX_CHILDREN 4
 
 
@@ -90,6 +91,7 @@ void waitChild(int sigNum) {
 
 int main(void)
 {
+
 	double rangeStart;
 	double rangeEnd;
 	size_t numSteps;
@@ -110,9 +112,20 @@ int main(void)
 			if(childPid < 0) { /* Error Handling */
 				perror("Failed to fork");
 				sem_post(&numFreeChildren);
-			} else if (childPid == 0) { //child process
+			} else if (childPid == 0) {
+
+
+
+				
 				double area = integrateTrap(func, rangeStart, rangeEnd, numSteps);
+
+
+				// Calculate the time difference in seconds
+				double timeTaken = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+
+
 				printf("The integral of function \"%s\" in range %g to %g is %.10g\n", funcName, rangeStart, rangeEnd, area);
+				printf("Time taken: %.6f seconds\n", timeTaken);
 				_exit(0); // Force immediate exit in the child process
 			}
 		} else {
@@ -122,5 +135,8 @@ int main(void)
 	}
 	
 	sem_destroy(&numFreeChildren);
+
+
+	// After all children are done, exit the process
 	_exit(0); // Forces more immediate exit than normal - **Use this to exit processes throughout the assignment!**
 }
