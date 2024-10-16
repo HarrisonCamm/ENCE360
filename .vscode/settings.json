@@ -4,6 +4,12 @@
         "unistd.h": "c",
         "stdbool.h": "c",
         "time.h": "c",
-        "pthread.h": "c"
+        "pthread.h": "c",
+        "system_error": "c",
+        "array": "c",
+        "functional": "c",
+        "tuple": "c",
+        "type_traits": "c",
+        "utility": "c"
     }
 }

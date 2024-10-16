@@ -26,9 +26,16 @@ int main(int argc, char** argv) {
     if (world_rank == 0) {
         printf("%d: sending value %d to process %d\n", world_rank, value, dest);
         MPI_Send(&value, 1, MPI_INT, dest, 0, MPI_COMM_WORLD);
-    }
 
-    //TODO: Implement me
+        MPI_Recv(&value, 1, MPI_INT, src, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        printf("%d: received value %d from process %d\n", world_rank, value, src);
+    } else {
+        MPI_Recv(&value, 1, MPI_INT, world_rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        printf("%d: received value %d from process %d\n", world_rank, value, src);
+
+        printf("%d: sending value %d to process %d\n", world_rank, world_rank, dest);
+        MPI_Send(&world_rank, 1, MPI_INT, dest, 0, MPI_COMM_WORLD);
+    }
 
     // Cleanup
     MPI_Finalize();

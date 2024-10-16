@@ -97,32 +97,30 @@ int main(int argc, char** argv) {
     // Compute the sum of the subset on all processes 
     double local_len = compute_sum(sub_rand_nums, elems_proc);
 
+    // Array to store the sums of all of the segments to be summed later
+    double* sub_sums = malloc(world_rank * sizeof(double));
+
     double total = 0.0;
 
     //TODO: Replace MPI_Reduce with MPI_Gather impelemtation
-    MPI_Reduce(&local_len, &total, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    // MPI_Reduce(&local_len, &total, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
+    MPI_Gather(&local_len, 1, MPI_DOUBLE, &total, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-
-
-
-
-
-    
-    
-    
-    
-    
-    
+    for (size_t i = 0; i <= world_rank; i++)
+    {
+        total += sub_sums[i];
+    }
+    total += local_len;
     
     // Stop the clock
     clock_gettime(CLOCK_REALTIME, &stop);
+
 
     // Compute the total average of all numbers.
     if (world_rank == 0) {
         printf("time taken: %.4f vector length: %f\n", seconds(start, stop), sqrt(total));
     }
-
 
     // Cleanup
     MPI_Finalize();
