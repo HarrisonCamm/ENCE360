@@ -50,6 +50,13 @@ int main(int argc, char *argv[])
      * TODO: copy the file using fread/fwrite
      * 
      */
+    
+    size_t bytes_read;
+    while ((bytes_read = fread(buffer, 1, chunk_size, src)) > 0) {
+        fwrite(buffer, 1, bytes_read, dst);
+    }
+    
+
 
     
     fclose(src);

@@ -39,12 +39,22 @@ int main(int argc, char *argv[])
     
     
     char *buffer = malloc(chunk_size);
-    
+    if (buffer == NULL) handle_error("malloc");
 
     /*
      * TODO: copy the file using read/write
      * 
      */
+
+    ssize_t bytes_read, bytes_written;
+
+    while((bytes_read = read(src, buffer, chunk_size)) > 0) {
+      bytes_written = write(dst, buffer, bytes_read);
+      if (bytes_written != bytes_read) {
+        handle_error("write");
+      }
+    }
+
     
     close(src);
     close(dst);
